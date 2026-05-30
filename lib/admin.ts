@@ -1,13 +1,22 @@
 export const ADMIN_COOKIE_NAME = "jobclaw-admin";
 
-const defaultAdminPassword = "claws2026";
-
-export function getAdminPasswords() {
-  return [defaultAdminPassword, process.env.ADMIN_DASHBOARD_TOKEN].filter(Boolean);
+function getAdminDashboardToken(): string | undefined {
+  const token = process.env.ADMIN_DASHBOARD_TOKEN?.trim();
+  return token || undefined;
 }
 
-export function isValidAdminPassword(password: string | null | undefined) {
-  return Boolean(password && getAdminPasswords().includes(password));
+/** True when ADMIN_DASHBOARD_TOKEN is set (required for admin access in production). */
+export function isAdminAuthConfigured(): boolean {
+  return Boolean(getAdminDashboardToken());
+}
+
+export function isValidAdminPassword(password: string | null | undefined): boolean {
+  const token = getAdminDashboardToken();
+  if (!token || !password) {
+    return false;
+  }
+
+  return password === token;
 }
 
 export function readCookieValue(cookieHeader: string | null, name: string) {

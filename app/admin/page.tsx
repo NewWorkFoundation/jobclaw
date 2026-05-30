@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ADMIN_COOKIE_NAME, isValidAdminPassword } from "@/lib/admin";
+import { ADMIN_COOKIE_NAME, isAdminAuthConfigured, isValidAdminPassword } from "@/lib/admin";
 import { intakeQuestions } from "@/lib/jobclaw";
 import { getSubmissionStoreLabel, listSubmissions } from "@/lib/submissions";
 
@@ -43,6 +43,45 @@ async function signInAdmin(formData: FormData) {
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
   const params = await searchParams;
+
+  if (!isAdminAuthConfigured()) {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    return (
+      <main className="min-h-[100dvh] brand-bg px-4 py-10 sm:px-8">
+        <nav aria-label="Main links" className="mx-auto mb-10 flex w-full max-w-3xl">
+          <Link className="text-sm font-bold text-foreground underline-offset-4 hover:underline sm:text-base" href="/">
+            JobClaw
+          </Link>
+        </nav>
+        <section className="mx-auto grid w-full max-w-3xl gap-12">
+          <Card className="border-border/70 shadow-lg">
+            <CardHeader className="space-y-3 p-10">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                Administrator dashboard
+              </p>
+              <CardTitle className="text-3xl font-bold tracking-tight">Admin is not configured.</CardTitle>
+              <CardDescription className="text-base leading-relaxed">
+                {isProduction ? (
+                  <>
+                    Set <strong>ADMIN_DASHBOARD_TOKEN</strong> in your hosting environment (for example Vercel) to a
+                    new long random secret before using this page. The previous default password was removed from the
+                    codebase and must be rotated.
+                  </>
+                ) : (
+                  <>
+                    Add <strong>ADMIN_DASHBOARD_TOKEN</strong> to <code className="text-sm">.env.local</code> to sign in
+                    locally.
+                  </>
+                )}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </section>
+      </main>
+    );
+  }
+
   const queryPassword = getFirstParam(params.password) ?? getFirstParam(params.token);
   const cookieStore = await cookies();
   const cookiePassword = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
